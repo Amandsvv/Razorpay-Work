@@ -1,0 +1,1 @@
+// roles.schema.js (scaffold)

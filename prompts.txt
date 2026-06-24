@@ -1,0 +1,175 @@
+Act as a senior software engineer. Create an Express.js application 
+using JavaScript (no TypeScript) for a reimbursements management tool 
+with role-based access control.
+
+Make sure to follow these requirements:
+
+1. Keep separate modules. We will have these modules:
+   - onboardings   (register, login, logout)
+   - roles         (assign role)
+   - employees     (list, assign to RM, unassign from RM)
+   - reimbursements (create, update status, list, list by userId)
+
+2. Inside every module follow this structure:
+   src/app/<module-name>/
+       <module-name>.routes.js
+       <module-name>.controller.js
+       <module-name>.service.js
+       <module-name>.schema.js
+
+3. Inside the src folder, have these folders:
+       app
+       constants
+       middlewares
+       utils
+       config
+       logger
+   
+   And add these files:
+       app.js
+       server.js
+
+4. Use functional programming for writing code.
+   You can use classes only for specific use cases like
+   creating error classes or logger classes.
+
+5. Use winston logger for logging. Use this logger utility 
+   everywhere to log entry/exit to controllers, services. 
+   Also log exceptions and errors. Never use console.log directly.
+
+6. Create response classes called ApiSuccessResponse and 
+   ApiErrorResponse, keep them in utils.
+
+7. Create custom error classes and throw them at required places. 
+   Keep them in utils.
+
+8. Error handling will be done in error handling middleware in Express.
+
+9. Create a custom utility asyncHandler to ease the error handling flow.
+
+10. Use zod for request validation (DTOs). This is JavaScript, 
+    so no TypeScript types — just use zod schemas directly.
+
+11. Use drizzle ORM with drizzle-kit for migrations.
+    Tables to create:
+    
+    users
+    - id           varchar PK (UUID, default gen_random_uuid())
+    - name         varchar NOT NULL
+    - email        varchar UNIQUE NOT NULL
+    - password     varchar NOT NULL
+    - role         varchar NOT NULL DEFAULT 'EMP'
+                   CHECK role IN ('EMP', 'RM', 'APE', 'CFO')
+    - created_at   timestamp DEFAULT now()
+
+    employee_assignments
+    - id           varchar PK (UUID)
+    - employee_id  varchar FK → users.id UNIQUE (one RM per EMP)
+    - manager_id   varchar FK → users.id
+
+    reimbursements
+    - id           varchar PK (UUID)
+    - title        varchar NOT NULL
+    - description  text NOT NULL
+    - amount       decimal NOT NULL
+    - status       varchar NOT NULL DEFAULT 'PENDING'
+                   CHECK status IN ('PENDING','RM_APPROVED','APPROVED','REJECTED')
+    - created_by   varchar FK → users.id
+    - created_at   timestamp DEFAULT now()
+
+    approvals
+    - id                varchar PK (UUID)
+    - reimbursement_id  varchar FK → reimbursements.id
+    - approver_id       varchar FK → users.id
+    - approval_type     varchar NOT NULL  ('RM' | 'APE' | 'CFO')
+    - status            varchar NOT NULL  ('APPROVED' | 'REJECTED')
+    - approved_at       timestamp DEFAULT now()
+    - UNIQUE (reimbursement_id, approval_type)
+
+12. env will be extracted in config/env.config.js
+    Required env variables:
+    PORT=7002
+    DATABASE_URL=
+    JWT_SECRET=        (for cookie signing)
+    BCRYPT_SALT_ROUNDS=
+
+13. Keep constants in src/constants:
+    - roles.constants.js    → EMP, RM, APE, CFO
+    - status.constants.js   → PENDING, RM_APPROVED, APPROVED, REJECTED
+    - approval.constants.js → RM, APE, CFO
+
+14. Create a zod validation middleware and error handling middleware 
+    in src/middlewares:
+    - validate.middleware.js   (zod schema validation)
+    - error.middleware.js      (global error handler)
+    - auth.middleware.js       (cookie-based auth check)
+
+15. Do not keep separate .env per environment.
+    Use one single .env for all environments.
+    No environment-specific customizations anywhere in code.
+
+16. Purpose of these files:
+    app.js
+      - Register middlewares
+      - Register routes
+      - Health check route GET /health
+    
+    server.js
+      - Load env
+      - Database connection
+      - Create express app
+      - Start server on PORT 7002 (hard requirement)
+
+17. Setup database connection with PostgreSQL via Supabase 
+    using drizzle ORM in config/db.config.js
+
+18. API response convention:
+    
+    Success:
+    {
+        success: true,
+        message: "...",
+        data: { ... }
+    }
+
+    Error:
+    {
+        success: false,
+        message: "...",
+        errors?: { ... }
+    }
+
+19. Setup these middlewares in app.js:
+    - cors
+    - helmet
+    - express.json
+    - cookie-parser
+    - morgan
+
+20. Health check API at GET /health
+
+21. All routes must be prefixed with /rest as per spec:
+    POST   /rest/onboardings/register
+    POST   /rest/onboardings/login
+    POST   /rest/onboardings/logout
+    POST   /rest/roles/assign
+    GET    /rest/employees
+    POST   /rest/employees/assign
+    DELETE /rest/employees/assign
+    POST   /rest/reimbursements
+    PATCH  /rest/reimbursements
+    GET    /rest/reimbursements
+    GET    /rest/reimbursements/:userId
+
+22. package.json must expose exactly these scripts:
+    "dev"           → starts app on port 7002
+    "db:migrate"    → runs drizzle-kit migrations
+    "db:seed-data"  → seeds ONLY the CFO account:
+                      email:    cfo@org.com
+                      password: CFO#ORG@April2026
+                      role:     CFO
+
+23. At this stage ONLY create the folder structure with 
+    empty files (no implementation). Just scaffold the 
+    entire project layout so it is clean, organized and 
+    ready for incremental feature development.

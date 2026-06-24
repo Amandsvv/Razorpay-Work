@@ -1,0 +1,1 @@
+// status constants (scaffold)

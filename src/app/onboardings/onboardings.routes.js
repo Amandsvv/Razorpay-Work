@@ -1,0 +1,1 @@
+// onboardings.routes.js (scaffold)

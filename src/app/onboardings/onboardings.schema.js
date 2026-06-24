@@ -1,0 +1,1 @@
+// onboardings.schema.js (scaffold)

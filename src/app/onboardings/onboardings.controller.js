@@ -1,0 +1,1 @@
+// onboardings.controller.js (scaffold)
